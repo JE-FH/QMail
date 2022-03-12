@@ -1,0 +1,3 @@
+[submodule "TerminalInterface"]
+	path = TerminalInterface
+	url = https://github.com/JE-FH/TerminalInterface
