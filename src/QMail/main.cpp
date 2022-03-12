@@ -1,12 +1,31 @@
 extern "C" {
-#include "../../TerminalInterface/TerminalInterface/terminal_interface.h"
+#include <terminal_interface.h>
 }
+#include <memory>
+#include <stdexcept>
+#include <iostream>
+#include "TITerminalWindow.hpp"
+
+int safe_main(std::shared_ptr<TIState> terminal_interface);
+
 int main() {
-	TIState* terminal_interface = TI_init(true);
-	TI_clear(terminal_interface);
-	TI_set_background_color(terminal_interface, TERM_COLOR_BLUE);
-	TI_set_text_color(terminal_interface, TERM_COLOR_LIME);
-	TI_write_no_wrap_sz(terminal_interface, "hello world!");
-	TI_update_display(terminal_interface);
+	try {
+		std::shared_ptr<TIState> terminal_interface = std::shared_ptr<TIState>(TI_init(true), [](TIState* p) { TI_free(p); });
+		return safe_main(terminal_interface);
+	} catch (const std::exception& e) {
+		std::cout << "Uncaught error: " << e.what() << std::endl;
+	}
+}
+
+int safe_main(std::shared_ptr<TIState> terminal_interface) {
+	TITerminalWindow window = TITerminalWindow(terminal_interface);
+
+	window.print(U"Hello world!", OverflowHandling::WRAP, OverflowHandling::SCROLL);
+
+	TI_update_display(terminal_interface.get());
+
+	uint32_t c = TI_read_key(terminal_interface.get());
+	window.print(U"read key", OverflowHandling::WRAP, OverflowHandling::SCROLL);
+	TI_update_display(terminal_interface.get());
 	return 0;
 }
